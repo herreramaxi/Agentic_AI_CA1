@@ -1,0 +1,16 @@
+[project]
+name = "reverse-engineering"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "deepagents>=0.7.26",
+    "dotenv>=0.9.9",
+    "langchain-openai>=1.7.2",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.4.0",
+]
