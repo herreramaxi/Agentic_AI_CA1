@@ -1,9 +1,12 @@
+import os
+
 from langchain_groq import ChatGroq
 from langchain_deepseek import ChatDeepSeek
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
 
-load_dotenv()
 
+load_dotenv(override=True)
 models = {
     "qwen/qwen3.8-27b": ChatGroq(
         model=    "qwen/qwen3.8-27b",
@@ -22,8 +25,15 @@ models = {
         model="llama-3.1-8b-instant",
         temperature=0
     ),
+    "gpt-6-luna" :ChatOpenAI(
+        model="gpt-6-luna",
+        api_key=os.getenv("OPENAI_API_KEY", "n/a")     
+    ),
     "openai/gpt-oss-20b": ChatGroq(
         model="openai/gpt-oss-20b",
+        temperature=0) ,
+    "openai/gpt-oss-120b": ChatGroq(
+        model="openai/gpt-oss-120b",
         temperature=0) ,
     "deepseek":  ChatDeepSeek(
          model=  "deepseek-chat",
