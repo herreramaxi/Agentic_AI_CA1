@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 import re
 import yaml
-from langchain.tools import tool
 
 ##ref: https://github.com/langchain-ai/deepagents/blob/e80fd67dfaf5ef19f11a64c5d039f18b8b0c7b27/libs/deepagents/deepagents/middleware/skills.py#L168
 #Regex to parse the skills header
@@ -65,26 +64,23 @@ NO_SKILL_PROMPT_INFERENCE ="""
 1. Respond to the user the best as you can with your knowledge.
 """
 
-
 class SkillsManager: 
     skills_location:str = ""
 
     def __init__(self, skills_location= "./skills"):
         self.skills_location = skills_location        
 
-    def load_first_level(self):
-        skills_first_level = []
+    def load_skills(self):
+        skills = []
         
         # folders= os.walk(self.skills_folder)
         if(not os.path.isdir(self.skills_location)):
             print(f"There is not skills folder on: {self.skills_location}")
-            return skills_first_level
+            return skills
 
         base_dir = Path(self.skills_location)    
-
-        # folders = os.listdir(self.skills_location)        
-        for item in base_dir.iterdir():
-        # for folder in folders:                      
+   
+        for item in base_dir.iterdir():                       
             if not item.is_dir():
                 print(f"Skill not found on: {skill_path}")
                 continue
@@ -96,16 +92,7 @@ class SkillsManager:
                 print(f"Skill not found on: {skill_path}")
                 continue
             skill_file_content = skill_path.read_text(encoding="utf-8")
-
-            # skill_path = os.path.join(self.skills_location ,skill_file_name, "SKILL.md")
-            
-            # if(not os.path.isfile(skill_path)):
-            #     print(f"Skill not found on: {skill_path}")
-            #     continue
-            
-            # with open(skill_path) as file:
-            #     skill_file_content = file.read()
-
+          
             match = _FRONTMATTER_PATTERN.match(skill_file_content )
             if not match:
                 print(f"Skill does not complies with standard SKILL header format: {skill_path}")
@@ -124,19 +111,17 @@ class SkillsManager:
                 print(f"There is a mistmatch between skill folder name and skill header name: {skill_path}")
                 continue
 
-            skills_first_level.append({
+            skills.append({
                 "name": skill_header_name,
                  "description":   skill_header_description,
                  "skill_path": skill_path,
                  "file_content": skill_file_content
                 })
 
-        return skills_first_level
+        return skills
             
-    def generate_first_level_prompt(self, training_mode: bool = False):
-#- **arxiv-search**: Search the arXiv preprint repository for research papers. Use when the user asks about academic papers, recent research, or scientific literature.
-#  -> Read `/skills/arxiv-search/SKILL.md` for full instructions  
-        skills_first_level = self.load_first_level()
+    def generate_system_prompt(self, training_mode: bool = False):
+        skills_first_level = self.load_skills()
         any_skill = len(skills_first_level) > 0
 
         if(not any_skill):
@@ -157,11 +142,11 @@ class SkillsManager:
         skill_not_found_prompt = NO_SKILL_PROMPT_TRAINING if training_mode else NO_SKILL_PROMPT_INFERENCE
         system_prompt+=skill_not_found_prompt
         
-        return (any_skill,system_prompt)
+        return system_prompt
 
     def GetSkillContent(self, skill_name: str) -> str:        
         base_dir = Path(self.skills_location)    
-        skill_path = base_dir / skill_name / 'Skill.md'
+        skill_path = base_dir / skill_name / 'SKILL.md'
         skill_content = skill_path.read_text(encoding="utf-8")
 
         return skill_content
@@ -203,25 +188,12 @@ class SkillsManager:
             escaped_description = f'"{escaped_description}"'
         
         # Create SKILL.md content with YAML frontmatter
-        skill_content = f"""---
-    name: {name}
-    description: {escaped_description}
-    ---
-
-    {content}"""
+        skill_content = f"""---\nname: {name}\ndescription: {escaped_description}\n---
+        
+        {content}"""
         
         # Write SKILL.md file
         skill_file = skill_dir / "SKILL.md"
         skill_file.write_text(skill_content, encoding='utf-8')
         
-        return skill_file
-
-    #This does not look that belong to this class
-    @tool
-    def load_skill(skill_name: str) -> str:
-        """Get the content of a skill given the skill name.
-        Args:
-            skill_name (str): The name of the skill to get the content of.
-        """     
-        sm = SkillsManager()        
-        return sm.GetSkillContent(skill_name)    
+        return skill_file 
