@@ -5,7 +5,9 @@ from langchain.agents import create_agent
 from langchain.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage
 
-from harness_agent.agents.skills_creator import SkillsCreator
+from harness_agent.agents.guidelines_optimizer_agent import GuidelinesOptimizerAgent
+from harness_agent.agents.skills_creator_agent import SkillsCreatorAgent
+from harness_agent.middleware.guidelines_middleware import GuidelinesMiddleware
 from harness_agent.middleware.skill_middleware import SkillMiddleware
 from harness_agent.state import AgentContext, TrainingState
 from harness_agent.tools.supervisor import request_supervisor
@@ -19,6 +21,8 @@ class AgentHarness:
     training_dataset : Any |None = None
     training_mode: bool = False
     agent: Any | None = None 
+    skills_creator: SkillsCreatorAgent | None = None 
+    guidelines_optimizer: GuidelinesOptimizerAgent | None = None 
     system_prompt: str | None = None
         
     def __post_init__(self) -> None:
@@ -28,7 +32,8 @@ class AgentHarness:
         tools = []
         if self.training_mode:
             tools.append(request_supervisor)
-            self.skills_creator = SkillsCreator(model=self.model)
+            self.skills_creator = SkillsCreatorAgent(model=self.model)
+            self.guidelines_optimizer = GuidelinesOptimizerAgent(model=self.model)
 
         self.agent = create_agent(
             model=self.model,        
@@ -36,7 +41,7 @@ class AgentHarness:
             state_schema=TrainingState,
             # tools= [sm.load_skill, self.request_supervisor],
             tools= tools,
-            middleware=[SkillMiddleware(training_mode =self.training_mode)],
+            middleware=[SkillMiddleware(training_mode =self.training_mode), GuidelinesMiddleware()],
             system_prompt=self.system_prompt,
         )
 
@@ -57,10 +62,15 @@ class AgentHarness:
             }, 
             context= context
         )
-        if response.get("supervisor_used", False):                    
+
+        print(response)
+        if self.training_mode and response.get("supervisor_used", False):                    
             response_skill_creator = self.skills_creator.invoke(query,reference_answer)
             print("response_skill_creator:")
             print(response_skill_creator)
-                        
+
+        if self.training_mode:
+            agent_response = response["messages"][-1].content
+            self.guidelines_optimizer.invoke(query, agent_response, reference_answer)
 
         return response

@@ -5,15 +5,13 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from harness_agent.skills.tools import create_skill
 
-SKILL_CREATOR_PROMPT = """
-You are a skill creation agent responsible for improving
-a customer service assistant.
-
+SYSTEM_PROMPT = """
+You are a skill creation agent responsible for improving a customer service assistant.
 You will receive:
 - A customer query
 - A reference answer provided by a supervisor
 
-Your only action is to call the tool named create_skill.
+You MUST call the tool named 'create_skill'.
 Do not invent other tool names. Do not answer in plain text.
 
 Tool arguments:
@@ -28,11 +26,11 @@ Instructions for the skill content:
 4. Do not invent policies not supported by the example.
 5. Do not include customer-specific details unless needed for a general procedure.
 
-Create exactly one focused, reusable skill via create_skill.
+Create exactly one focused, reusable skill via 'create_skill' tool.
 """
 
 @dataclass
-class SkillsCreator:
+class SkillsCreatorAgent:
     model: BaseChatModel
     agent: Any | None = None 
     
@@ -40,7 +38,7 @@ class SkillsCreator:
         self.agent = create_agent(
                 model=self.model,
                 tools=[create_skill],
-                system_prompt=SKILL_CREATOR_PROMPT,
+                system_prompt=SYSTEM_PROMPT,
         )
 
     def invoke(self, query: str, reference_answer: str):
