@@ -28,8 +28,8 @@ class GuidelinesOptimizerAgent:
         )
 
     def invoke(self, query: str, agent_response: str, reference_answer: str):    
-        current_guidelines = GuidelinesManager().read_guidelines().strip() or "N/A"
-
+        current_guidelines = GuidelinesManager().read_guidelines()
+        
         response = self.agent.invoke(
              {
                  "messages": [

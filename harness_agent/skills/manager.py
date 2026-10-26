@@ -188,7 +188,7 @@ class SkillsManager:
             escaped_description = f'"{escaped_description}"'
         
         # Create SKILL.md content with YAML frontmatter
-        skill_content = f"""---\nname: {name}\ndescription: {escaped_description}\n---\n{content}"""
+        skill_content = f"""---\nname: {name}\ndescription: {escaped_description}\n---\n\n{content}"""
         
         # Write SKILL.md file
         skill_file = skill_dir / "SKILL.md"

@@ -12,10 +12,9 @@ def load_skill(skill_name: str) -> str:
 
 @tool
 def create_skill(name: str, description: str, content: str) -> str:
-    """Create a skill directory with a SKILL.md file.
-
+    """Create a skill using the given parameters. 
     Args:
-        name: Skill id (directory name and YAML frontmatter name), kebab-case.
+        name: Skill name, kebab-case.
         description: Brief description of when to use the skill.
         content: Markdown body with instructions for the assistant.
     """
