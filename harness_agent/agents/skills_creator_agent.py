@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+import logging
 from typing import Any
 from langchain.chat_models import BaseChatModel
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
+from general import get_tools_info
 from harness_agent.skills.tools import create_skill
 
 SYSTEM_PROMPT = """
@@ -51,5 +53,11 @@ class SkillsCreatorAgent:
                      ]
              }
         )
+        
+        response['tools_info'] = get_tools_info(response, 'create_skill')
+
+        logging.debug(f"response: {response}")  
+        logging.info(f"SkillsCreatorAgent executed {'successfully' if response['tools_info']['last_tool_status'] else "with errors"}, number of tool calls: {response['tools_info']['tool_calls']}")
+                
         return response
-      
+

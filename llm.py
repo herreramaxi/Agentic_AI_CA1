@@ -1,10 +1,9 @@
 import os
-
 from langchain_groq import ChatGroq
 from langchain_deepseek import ChatDeepSeek
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-
+from langchain_core.language_models.chat_models import BaseChatModel
 
 load_dotenv(override=True)
 models = {
@@ -49,5 +48,5 @@ models = {
             temperature=0)
 }
 
-def get_llm(model_name):
+def get_llm(model_name) -> BaseChatModel:
     return models.get(model_name)

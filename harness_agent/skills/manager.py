@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 import re
@@ -75,27 +76,27 @@ class SkillsManager:
         
         # folders= os.walk(self.skills_folder)
         if(not os.path.isdir(self.skills_location)):
-            print(f"There is not skills folder on: {self.skills_location}")
+            logging.warning(f"There is not skills folder on: {self.skills_location}")
             return skills
 
         base_dir = Path(self.skills_location)    
    
         for item in base_dir.iterdir():                       
             if not item.is_dir():
-                print(f"Skill not found on: {skill_path}")
+                logging.warning(f"Skill not found on: {skill_path}")
                 continue
             skill_file_name = item.name  
             skill_file_content = "N/A"
             skill_path = item / "SKILL.md"
             
             if not skill_path.is_file():
-                print(f"Skill not found on: {skill_path}")
+                logging.warning(f"Skill not found on: {skill_path}")
                 continue
             skill_file_content = skill_path.read_text(encoding="utf-8")
           
             match = _FRONTMATTER_PATTERN.match(skill_file_content )
             if not match:
-                print(f"Skill does not complies with standard SKILL header format: {skill_path}")
+                logging.warning(f"Skill does not complies with standard SKILL header format: {skill_path}")
                 continue
 
             skill_header = match.group(1)
@@ -104,11 +105,11 @@ class SkillsManager:
             skill_header_description = data.get("description", "").strip()
 
             if(not skill_header_name or not skill_header_description):
-                print(f"Skill name and description fileds are mandatory: {skill_path}")
+                logging.warning(f"Skill name and description fileds are mandatory: {skill_path}")
                 continue
 
             if skill_header_name != skill_file_name:
-                print(f"There is a mistmatch between skill folder name and skill header name: {skill_path}")
+                logging.warning(f"There is a mistmatch between skill folder name and skill header name: {skill_path}")
                 continue
 
             skills.append({

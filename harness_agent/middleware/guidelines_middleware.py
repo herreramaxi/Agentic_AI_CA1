@@ -11,10 +11,10 @@ class GuidelinesMiddleware(AgentMiddleware):
     # # Register the load_skill tool as a class variable
     # tools = [load_skill]            
 
-    def before_agent(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
-        print(f"before_agent {len(state['messages'])} messages")        
+    # def before_agent(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+    #     print(f"before_agent {len(state['messages'])} messages")        
 
-        return
+    #     return
     
     def wrap_model_call(
         self,

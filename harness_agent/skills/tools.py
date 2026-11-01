@@ -19,4 +19,6 @@ def create_skill(name: str, description: str, content: str) -> str:
         content: Markdown body with instructions for the assistant.
     """
     sm = SkillsManager()
-    return str(sm.create_skill(name, description, content))
+    skill_path_created = str(sm.create_skill(name, description, content))
+
+    return f"Skill successfully created on path: {skill_path_created}"
