@@ -28,17 +28,30 @@ models: dict[str, BaseChatModel] = {
         max_retries=3,
         timeout=60,
     ),
+    #expensive
     "gpt-5.5": ChatOpenAI(
         model="gpt-5.5",
         reasoning_effort="low",
         max_retries=3,
         timeout=60,
     ),
-    "gpt-6-luna": ChatOpenAI(
+    "gpt-6-luna-none": ChatOpenAI(
+        model="gpt-6-luna",
+        reasoning_effort="none",
+        max_retries=3,
+        timeout=60,
+    ),
+    "gpt-6-luna-low": ChatOpenAI(
         model="gpt-6-luna",
         reasoning_effort="low",
         max_retries=3,
         timeout=60,
+    ),
+    "gpt-6-luna-medium": ChatOpenAI(
+            model="gpt-6-luna",
+            reasoning_effort="medium",
+            max_retries=3,
+            timeout=60,
     ),
     # Agent: fast DeepSeek model
     "deepseek-flash": ChatDeepSeek(
