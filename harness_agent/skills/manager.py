@@ -70,7 +70,7 @@ class SkillsManager:
 
     def __init__(self, skills_location= "./skills"):
         self.skills_location = skills_location        
-
+    
     def load_skills(self):
         skills = []
         

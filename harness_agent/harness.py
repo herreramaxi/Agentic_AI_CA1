@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from langchain.agents import create_agent
 from langchain.chat_models import BaseChatModel
@@ -22,7 +22,8 @@ class AgentHarness:
     skills_creator: SkillsCreatorAgent | None = None 
     guidelines_optimizer: GuidelinesOptimizerAgent | None = None 
     system_prompt: str | None = None
-        
+    message_history: list[str] = field(default_factory=list)
+    
     def __post_init__(self) -> None:
         logging.info(f"Initializing AgentHarness - training_mode: {self.training_mode}, agentic_memory_disabled: {self.agentic_memory_disabled}")
 
@@ -58,28 +59,30 @@ class AgentHarness:
 
         return reference_answer
 
-    def invoke(self, query: str):
-        reference_answer = self.get_reference_answer(query) if self.training_mode else ""
+    def invoke(self, input :str):
+        reference_answer = self.get_reference_answer(input) if self.training_mode else ""
         context = AgentContext(reference_answer)
-        humman_message = HumanMessage(query)
-        messages = [humman_message]
-        response = self.agent.invoke(
-            {   
-                'messages': messages, 
-                'supervisor_used': False
-            }, 
-            context= context
-        )
-        final_message = response["messages"][-1]
-        agent_response = final_message.text           
-        
-        if self.training_mode and was_tool_called(response, 'request_supervisor'):     
-            self.skills_creator.invoke(query,reference_answer)  
-
+        humman_message = HumanMessage(input)
+         
         if self.training_mode:
-            self.guidelines_optimizer.invoke(query, agent_response, reference_answer)
-            
-        response['content'] = response['text'] = agent_response
+            messages = [humman_message]
+        else:
+            self.message_history.append(humman_message)
+            messages = self.message_history
+               
+        response = self.agent.invoke({ 'messages': messages}, context= context)
+        ai_response = response["messages"][-1]
+        ai_response_text = ai_response.text           
+        
+        if self.training_mode:            
+            if was_tool_called(response, 'request_supervisor'):     
+                self.skills_creator.invoke(input,reference_answer)  
+       
+            self.guidelines_optimizer.invoke(input, ai_response_text, reference_answer)
+        else:
+            self.message_history.append(ai_response)
+                        
+        response['content'] = response['text'] = ai_response_text
         logging.info(f"Harness Response: {response['text']}")
 
         return response
