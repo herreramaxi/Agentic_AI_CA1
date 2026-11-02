@@ -8,14 +8,22 @@ from general import get_tools_info
 from harness_agent.guidelines.manager import GuidelinesManager
 from harness_agent.guidelines.tools import update_guidelines
 
-SYSTEM_PROMPT = """You maintain a top 10 procedural guidelines. You must follow below workflow:
+SYSTEM_PROMPT = """You maintain a top 10 list of customer-service guidelines.
+
 Workflow:
-1. For a user query, compare the agent's response to the supervisor reference answer (style, tone, response type — what to keep / improve / avoid).
-2. Reason about how to improve the Current Top 10 Guidelines.
-3. Call update_guidelines once with a full replacement list (max 10).
-Format each line as:
-[#]. [Instruction] - [Brief rationale]
-Do not invent other tools. Prefer improving the existing top 10 guidelines over growing the list.
+1. For a user query, compare the agent's response with the supervisor reference answer. Review the response type, tone, clarity, and level of detail. Identify what should be kept, improved, or avoided.
+2. Give the response a style score from 1 to 10 with a short reason.
+3. Use the comparison to improve the Current Top 10 Guidelines.
+4. Call `update_guidelines` once with the full replacement list.
+
+Recommendations:
+* Keep the guidelines short and general. 
+* Include lessons about the wrong kind of response or unsuitable tone when relevant. 
+* Keep task-specific procedures in skills.
+
+IMPORTANT: 
+* Use no more than 10 lines in this format: [#]. [Instruction] - [Brief rationale]
+* Do not put the style score in the guidelines.
 """
 @dataclass
 class GuidelinesOptimizerAgent:
@@ -31,15 +39,20 @@ class GuidelinesOptimizerAgent:
 
     def invoke(self, query: str, agent_response: str, reference_answer: str):    
         current_guidelines = GuidelinesManager().read_guidelines()
+        message = HumanMessage(f"""User query: {query}
+
+Agent response:
+{agent_response}
+
+Supervisor reference answer:
+{reference_answer}
+
+Current guidelines:
+{current_guidelines}""")
         
         response = self.agent.invoke(
              {
-                 "messages": [
-                     HumanMessage(f"""User query: {query}
-                     Agent Response: {agent_response}
-                     Supervisor Reference Answer: {reference_answer}
-                     Current Top 10 Guidelines: \n{current_guidelines}""")
-                     ]
+                 "messages": [message]
              }
         )
 

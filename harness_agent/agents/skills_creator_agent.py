@@ -5,30 +5,37 @@ from langchain.chat_models import BaseChatModel
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from general import get_tools_info
-from harness_agent.skills.tools import create_skill
+from harness_agent.skills.manager import SkillsManager
+from harness_agent.skills.tools import create_skill, load_skill
 
-SYSTEM_PROMPT = """
-You are a skill creation agent responsible for improving a customer service assistant.
-You will receive:
-- A customer query
-- A reference answer provided by a supervisor
+SYSTEM_PROMPT = """You create or refine one reusable customer-service skill from a supervisor example.
 
-You MUST call the tool named 'create_skill'.
-Do not invent other tool names. Do not answer in plain text.
+You MUST finish by calling `create_skill` exactly once.
+The only valid tools are `load_skill` and `create_skill`.
+Use `load_skill` only to inspect one existing skill that covers the same task.
+Do not call `set_skill` or invent another tool name.
+Do not return only a plain-text answer.
+
+You will receive the customer query, supervisor reference answer, and the names and descriptions of existing skills.
+
+If an existing description covers the same task:
+1. Call `load_skill` with that exact name.
+2. Merge the reusable information from the existing skill and the new reference.
+3. Call `create_skill` with the same name to replace the skill with the improved version.
+
+If no existing description covers the task, call `create_skill` with a new name.
 
 Tool arguments:
-- name: short kebab-case skill id (e.g. payment-options-inquiry)
-- description: one-line summary of when to use the skill
-- content: Markdown instructions for handling similar queries
+- name: concise kebab-case name for the demonstrated task; reuse the existing name when refining
+- description: one sentence defining when the service agent should load it
+- content: Markdown instructions for handling similar future queries
 
-Instructions for the skill content:
-1. Identify the general task demonstrated by the example.
-2. Write clear, actionable Markdown the assistant can follow later.
-3. Preserve important facts, rules, and constraints from the reference.
-4. Do not invent policies not supported by the example.
-5. Do not include customer-specific details unless needed for a general procedure.
-
-Create exactly one focused, reusable skill via 'create_skill' tool.
+Content rules:
+1. Generalize from the example; do not include the customer's wording as a special case.
+2. Retain reusable variables and abstract fields from the reference instead of replacing them with invented concrete values.
+3. Include only facts, steps, and constraints supported by the reference answer.
+4. Do not invent merchants, policies, deadlines, eligibility rules, or contact details.
+5. Keep tone guidance brief because general interaction style belongs in AGENT.md.
 """
 
 @dataclass
@@ -39,18 +46,29 @@ class SkillsCreatorAgent:
     def __post_init__(self)-> None:
         self.agent = create_agent(
                 model=self.model,
-                tools=[create_skill],
+                tools=[load_skill, create_skill],
                 system_prompt=SYSTEM_PROMPT,
         )
 
     def invoke(self, query: str, reference_answer: str):
+        skill_descriptions = SkillsManager().get_skill_first_level_descriptions()
+        
+        message = HumanMessage(f"""Existing skills:
+        {skill_descriptions}
+
+        Customer query:
+        {query}
+
+        Supervisor reference answer:
+        {reference_answer}
+
+        Use `load_skill` only if an existing description covers the same task.
+        Finish by calling `create_skill` exactly once.
+        Do not use other tool names.""")
+        
         response = self.agent.invoke(
              {
-                 "messages": [
-                     HumanMessage(f"""Customer query: {query}
-                     Supervisor reference answer:
-                     {reference_answer}""")
-                     ]
+                 "messages": [message]
              }
         )
         

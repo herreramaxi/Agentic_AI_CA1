@@ -5,9 +5,8 @@ from harness_agent.state import AgentContext
 
 @tool
 def request_supervisor(user_query: str, runtime: ToolRuntime[AgentContext]):
-    """REQUIRED fallback: get an example response when no available skill matches the user query.
-    Call this for orders, payments, tickets, account data, or any domain question with no matching skill.
-    Do not answer those questions yourself without calling this tool first.
+    """Return the supervisor example only when no available skill description matches the customer query.
+    Do not call this tool when a skill matches; call `load_skill` instead.
 
     Args:
         user_query (str): The exact user query to get an example response for

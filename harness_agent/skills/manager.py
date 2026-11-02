@@ -4,15 +4,14 @@ from pathlib import Path
 import re
 import yaml
 
-##ref: https://github.com/langchain-ai/deepagents/blob/e80fd67dfaf5ef19f11a64c5d039f18b8b0c7b27/libs/deepagents/deepagents/middleware/skills.py#L168
+#ref: https://github.com/langchain-ai/deepagents/blob/e80fd67dfaf5ef19f11a64c5d039f18b8b0c7b27/libs/deepagents/deepagents/middleware/skills.py#L168
 #Regex to parse the skills header
 _FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
+#based on: https://github.com/langchain-ai/deepagents/blob/e80fd67dfaf5ef19f11a64c5d039f18b8b0c7b27/libs/deepagents/deepagents/middleware/skills.py#L873
 SKILLS_SYSTEM_PROMPT = """## Skills System
 
 You have access to a skills library that provides specialized capabilities and domain knowledge.
-
-Skills Location: {skills_location}
 
 **Available Skills:**
 
@@ -20,11 +19,11 @@ Skills Location: {skills_location}
 
 **How to Use Skills (Progressive Disclosure):**
 
-Skills follow a **progressive disclosure** pattern - you see their name and description above, but only read full instructions when needed:
+Skills follow a progressive disclosure pattern: you see each skill's name and description above, but you read its full instructions only when needed.
 
-1. **Recognize when a skill applies**: Check if the user's task matches a skill's description
-2. **Read the skill's full instructions**: Use `load_skill` tool passing as parameter the name shown in the skill list above.
-3. **Follow the skill's instructions**: SKILL.md contains step-by-step workflows, best practices, and examples
+1. **Recognize when a skill applies**: compare the user's request with the available skill descriptions.
+2. **Load the full instructions**: call 'load_skill' with the exact skill name from 'Available Skills' list.
+3. **Follow the skill**: use the returned instructions to answer the request.
 
 **When to Use Skills:**
 
@@ -33,36 +32,24 @@ Skills follow a **progressive disclosure** pattern - you see their name and desc
 - You need specialized knowledge or structured workflows
 - A skill provides proven patterns for complex tasks
 
-**Example Workflow (skill match):**
-
-User: "Can you research the latest developments in quantum computing?"
-
-1. Check available skills -> See a matching research skill
-2. Read the full skill file: `load_skill(skill_name="...")`
-3. Follow the skill's research workflow
-
-Remember: Skills make you more capable and consistent. When in doubt, check if a skill exists for the task!
+Important: 
+- Use 'load_skill'; do not attempt to read a filesystem path directly or use a non-existing tool.
+- When a skill description matches, load it before answering.
 """
 
-NO_SKILL_PROMPT_TRAINING ="""
+NO_SKILL_PROMPT_TRAINING = """
 **When No Relevant Skill Exists or no Skills are available (MANDATORY):**
 
-You MUST call the `request_supervisor` tool with the user's query BEFORE answering.
-Do NOT answer from your own knowledge, guess, or say you lack access — call the tool first, then base your reply on its result.
+If no available skill description matches the customer query, call `request_supervisor` before answering.
+Use the supervisor example to produce an answer in your own words.
+Do not copy exacly the example and do not add unsupported facts.
 
-**Example Workflow (no skill match):**
-User: "do you have info about order 1234?"
-
-1. Check available skills -> none match orders/tickets
-2. MUST call: `request_supervisor(user_query="do you have info about order 1234?")`
-3. Answer using the supervisor example — do not skip this step
-
-Remember: When in doubt whether a skill applies, call `request_supervisor`. Never skip it for domain questions with no matching skill.
+Important: If a skill description matches, call `load_skill` and do not call `request_supervisor`.
 """
 
-NO_SKILL_PROMPT_INFERENCE ="""
+NO_SKILL_PROMPT_INFERENCE = """
 **When No Relevant Skill Exists or no Skills are available:**
-1. Respond to the user the best as you can with your knowledge.
+Respond to the user the best as you can with from your custom service knowledge.
 """
 
 class SkillsManager: 
@@ -121,20 +108,23 @@ class SkillsManager:
 
         return skills
             
-    def generate_system_prompt(self, training_mode: bool = False):
+    def get_skill_first_level_descriptions(self):        
         skills_first_level = self.load_skills()
         any_skill = len(skills_first_level) > 0
 
         if(not any_skill):
-            skills_list= f"(No skills available yet. You can create skills in '{self.skills_location}' folder)"
+            skills_list= f"(No skills available yet)"
         else:
             skills_list = ""
 
         for skill in skills_first_level:
-            formatted_skill = f"- **{skill["name"]}**: {skill["description"]}\n  -> Read `{skill["skill_path"]}` for full instructions\n"
-            # print(formatted_skill)
+            formatted_skill = f"- **{skill["name"]}**: {skill["description"]}\n"            
             skills_list +=formatted_skill
 
+        return skills_list
+    
+    def generate_system_prompt(self, training_mode: bool = False):        
+        skills_list = self.get_skill_first_level_descriptions()    
         system_prompt =  SKILLS_SYSTEM_PROMPT.format(
             skills_location = self.skills_location,
             skills_list = skills_list

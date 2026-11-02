@@ -31,7 +31,7 @@ def clean_agentic_memory():
     else:
         logging.warning(f"path not exist ./skills, skipping...")
        
-    Path('.skills').mkdir(parents=True, exist_ok=True)        
+    Path('./skills').mkdir(parents=True, exist_ok=True)        
     logging.info(" * .skills folder created...")
    
     
@@ -42,7 +42,7 @@ def clean_agentic_memory():
         print(f"path not exist ./AGENT.md, skipping...")
     
     Path("./AGENT.md").touch(exist_ok=True)
-    print(" * ./AGENT.md file created...")
+    logging.info(" * ./AGENT.md file created...")
 import logging
 
 def initialize_logging(level):

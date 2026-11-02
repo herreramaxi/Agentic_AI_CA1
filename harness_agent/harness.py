@@ -28,7 +28,7 @@ class AgentHarness:
         logging.info(f"Initializing AgentHarness - training_mode: {self.training_mode}, agentic_memory_disabled: {self.agentic_memory_disabled}")
 
         if not self.system_prompt:            
-            self.system_prompt = "You are a helpful assistant."
+            self.system_prompt = "You are a helpful customer service assistant."
 
         tools = []
         if self.training_mode:
