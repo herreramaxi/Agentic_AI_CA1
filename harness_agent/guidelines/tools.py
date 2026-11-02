@@ -3,11 +3,11 @@ from harness_agent.guidelines.manager import GuidelinesManager
 
 @tool
 def update_guidelines(new_guidelines: str) -> str:
-    """Replace AGENT.md with the complete guideline list.
-    Use at most 10 short, general points in this format: [#]. [Instruction] - [Brief rationale]
-    
+    """Replace AGENT.md with the full guideline list.
+    At most 10 lines, like: 1. instruction - short reason
+
     Args:
-        new_guidelines: The complete list to save.
+        new_guidelines: The full list to save.
     """  
     gm = GuidelinesManager()        
     return gm.update_guidelines(new_guidelines)    

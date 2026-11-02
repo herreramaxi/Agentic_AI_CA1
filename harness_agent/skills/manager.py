@@ -14,7 +14,6 @@ SKILLS_SYSTEM_PROMPT = """## Skills System
 You have access to a skills library that provides specialized capabilities and domain knowledge.
 
 **Available Skills:**
-
 {skills_list}
 
 **How to Use Skills (Progressive Disclosure):**
@@ -22,34 +21,27 @@ You have access to a skills library that provides specialized capabilities and d
 Skills follow a progressive disclosure pattern: you see each skill's name and description above, but you read its full instructions only when needed.
 
 1. **Recognize when a skill applies**: compare the user's request with the available skill descriptions.
-2. **Load the full instructions**: call 'load_skill' with the exact skill name from 'Available Skills' list.
+2. **Load the full instructions**: call 'load_skill' with the exact skill name from the 'Available Skills' list.
 3. **Follow the skill**: use the returned instructions to answer the request.
 
 **When to Use Skills:**
 
-- Only when there are Skills available
-- User's request matches a skill's domain (e.g., "research X" -> web-research skill)
-- You need specialized knowledge or structured workflows
-- A skill provides proven patterns for complex tasks
+- Only when the Available Skills list contains a skill
+- The user's request matches one of those descriptions
 
-Important: 
-- Use 'load_skill'; do not attempt to read a filesystem path directly or use a non-existing tool.
-- When a skill description matches, load it before answering.
+Important:
+- Call load_skill only with a name copied from the Available Skills list.
+- If the list says no skills are available, or none of the descriptions match, do not call load_skill and do not invent a name.
+- Do not try to open a skill file yourself.
 """
 
 NO_SKILL_PROMPT_TRAINING = """
-**When No Relevant Skill Exists or no Skills are available (MANDATORY):**
-
-If no available skill description matches the customer query, call `request_supervisor` before answering.
-Use the supervisor example to produce an answer in your own words.
-Do not copy exacly the example and do not add unsupported facts.
-
-Important: If a skill description matches, call `load_skill` and do not call `request_supervisor`.
+If no skill in the list matches, call request_supervisor before you answer.
+Answer in your own words from that example. Do not copy it line by line.
 """
 
 NO_SKILL_PROMPT_INFERENCE = """
-**When No Relevant Skill Exists or no Skills are available:**
-Respond to the user the best as you can with from your custom service knowledge.
+If no skill in the list matches, answer the customer as well as you can.
 """
 
 class SkillsManager: 
@@ -123,24 +115,16 @@ class SkillsManager:
 
         return skills_list
     
-    def generate_system_prompt(self, training_mode: bool = False):        
-        skills_list = self.get_skill_first_level_descriptions()    
-        system_prompt =  SKILLS_SYSTEM_PROMPT.format(
-            skills_location = self.skills_location,
-            skills_list = skills_list
-        )
+    def generate_system_prompt(self, training_mode: bool = False):
+        skills_list = self.get_skill_first_level_descriptions()
+        fallback = NO_SKILL_PROMPT_TRAINING if training_mode else NO_SKILL_PROMPT_INFERENCE
+        return SKILLS_SYSTEM_PROMPT.format(skills_list=skills_list) + fallback
 
-        skill_not_found_prompt = NO_SKILL_PROMPT_TRAINING if training_mode else NO_SKILL_PROMPT_INFERENCE
-        system_prompt+=skill_not_found_prompt
-        
-        return system_prompt
-
-    def GetSkillContent(self, skill_name: str) -> str:        
-        base_dir = Path(self.skills_location)    
-        skill_path = base_dir / skill_name / 'SKILL.md'
-        skill_content = skill_path.read_text(encoding="utf-8")
-
-        return skill_content
+    def GetSkillContent(self, skill_name: str) -> str:
+        skill_path = Path(self.skills_location) / skill_name / "SKILL.md"
+        if not skill_path.is_file():
+            return f"No skill named {skill_name}. Use a name from the Available Skills list."
+        return skill_path.read_text(encoding="utf-8")
 
     #Ref: Based on agent_skills_utils.py
     def create_skill(self,

@@ -8,26 +8,37 @@ from general import get_tools_info
 from harness_agent.guidelines.manager import GuidelinesManager
 from harness_agent.guidelines.tools import update_guidelines
 
-SYSTEM_PROMPT = """You maintain a top 10 list of customer-service guidelines.
+SYSTEM_PROMPT = """You keep AGENT.md, a list of at most 10 guidelines for how the assistant should respond.
 
-Workflow:
-1. For a user query, compare the agent's response with the supervisor reference answer. Review the response type, tone, clarity, and level of detail. Identify what should be kept, improved, or avoided.
-2. Give the response a style score from 1 to 10 with a short reason.
-3. Use the comparison to improve the Current Top 10 Guidelines.
-4. Call `update_guidelines` once with the full replacement list.
+Your task is to refine that list from the latest turn while keeping the most valuable existing guidelines.
 
-Recommendations:
-* Keep the guidelines short and general; focus on style and response type (clarify vs give instructions vs escalate).
-* Include lessons about the wrong kind of response or unsuitable tone when relevant.
-* Keep task-specific procedures in skills, not in guidelines.
-* When a skill is loaded, the agent should follow that skill's steps and placeholders.
-* Do not invent policies, steps, or contact channels when no skill applies.
-* Do NOT write guidelines that ban portal steps, support channels, or placeholders in general — those belong in skills and should be used when a skill provides them.
+## Inputs
+The user message contains:
+- the current guidelines
+- the customer query
+- the assistant reply
+- the supervisor example
 
-IMPORTANT:
-* Use no more than 10 lines in this format: [#]. [Instruction] - [Brief rationale]
-* Do not put the style score in the guidelines.
+## What to judge
+Compare the assistant reply with the supervisor example on:
+- tone
+- kind of reply: ask a question, answer directly, or pass it on
+
+Leave concrete steps and intent-specific procedures to the skills.
+
+## How to update
+- Keep a guideline that is still useful.
+- Revise or add a guideline only when this turn shows it would improve future replies.
+- If nothing should change, return the current list unchanged.
+
+## Output
+Return only the list. One guideline per line, at most 10:
+
+[#]. [Imperative instruction] - [short reason]
+
+Call update_guidelines once with that full list.
 """
+
 @dataclass
 class GuidelinesOptimizerAgent:
     model: BaseChatModel

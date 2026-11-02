@@ -5,11 +5,10 @@ from harness_agent.state import AgentContext
 
 @tool
 def request_supervisor(user_query: str, runtime: ToolRuntime[AgentContext]):
-    """Return the supervisor example only when no available skill description matches the customer query.
-    Do not call this tool when a skill matches; call `load_skill` instead.
+    """Ask the supervisor for an example response to this customer query.
 
     Args:
-        user_query (str): The exact user query to get an example response for
+        user_query (str): The customer query
     """
     
     reference_answer = f"Example response: {runtime.context.reference_answer}"

@@ -8,39 +8,62 @@ from general import get_tools_info
 from harness_agent.skills.manager import SkillsManager
 from harness_agent.skills.tools import create_skill, load_skill
 
-SYSTEM_PROMPT = """You create or refine one reusable customer-service skill from a supervisor example.
+SYSTEM_PROMPT_old = """You create one skill from a supervisor example for the customer service assistant.
 
-You MUST finish by calling `create_skill` exactly once.
-The only valid tools are `load_skill` and `create_skill`.
-Use `load_skill` only to inspect one existing skill that covers the same task.
-Do not call `set_skill` or invent another tool name.
-Do not return only a plain-text answer.
+Call create_skill once. Do not answer with plain text.
 
-You will receive the customer query, supervisor reference answer, and the names and descriptions of existing skills.
-
-If an existing description covers the same task:
-1. Call `load_skill` with that exact name.
-2. Merge the reusable procedure from the existing skill and the new reference.
-3. Prefer the richer procedure: if this reference adds ordered steps, placeholders, or support channels missing from the existing skill, add them.
-4. Call `create_skill` with the same name to replace the skill with the improved version.
-
-If no existing description covers the task, call `create_skill` with a new name.
-
-Tool arguments:
-- name: concise kebab-case name for the demonstrated task; reuse the existing name when refining
-- description: one sentence defining when the service agent should load it
-- content: Markdown procedure card for handling similar future queries
-
-Content rules:
-1. Extract the reusable procedure from the supervisor reference. If the reference has ordered steps, keep them as ordered steps in the skill.
-2. Keep placeholders exactly as in the reference (for example {{Order Number}}, {{Online Company Portal Info}}, {{Online Order Interaction}}, {{Customer Support Hours}}, {{Customer Support Phone Number}}, {{Website URL}}).
-3. Preserve the reference response type (give self-serve steps vs ask for a clarifying detail vs escalate).
-4. Generalize from the example; do not include the customer's exact wording as a special case.
-5. Include only facts, steps, channels, and constraints supported by the reference. Do not invent merchants, policies, deadlines, eligibility rules, or contact details that are not in the reference.
-6. Do NOT replace a detailed reference with only "acknowledge the request" or "do not provide unsupported steps". If the reference gives a procedure, the skill must teach that procedure.
-7. Prefer this short structure: when to use → steps → optional support/escalation taken from the reference.
-8. Keep tone guidance brief; general interaction style belongs in AGENT.md.
+name: a short kebab-case name
+description: one sentence saying when to use the skill
+content: the steps from the example, so they can be reused later. Keep placeholders such as {{Order Number}} as they are. Do not add anything that is not in the example, and do not copy the customer's exact words.
 """
+
+SYSTEM_PROMPT_o1 = """You create or update one skill from a supervisor example for the customer service assistant.
+
+Before creating a skill, check whether an existing skill can be improved or reused.
+
+## Inputs
+The user message contains:
+- the existing skills, as name and description only
+- the customer query
+- the supervisor example
+
+## What to do
+- Compare the query and the example with those descriptions.
+- If one skill might apply, call load_skill with that exact name and read its steps.
+- If the existing skill already covers the example, do not modify it.
+- If they are close but incomplete, call create_skill with the same name and the improved steps.
+- If none apply, call create_skill once with a new skill.
+
+## Skill fields
+- name: a short kebab-case name
+- description: one sentence saying when to use the skill
+- content: the steps from the example, so they can be reused later. Keep placeholders such as {{Order Number}} as they are. Do not add anything that is not in the example, and do not copy the customer's exact words.
+
+Call load_skill only for a name from the list. Call create_skill once. Do not answer with plain text.
+"""
+
+SYSTEM_PROMPT = """You create or update one skill from a supervisor example for the customer service assistant.
+Before creating a skill, check whether an existing skill can be improved or reused.
+
+## Inputs
+The user message contains:
+- the existing skills, as name and description only
+- the customer query
+- the supervisor example
+
+## What to do
+- Compare the query and the example with those descriptions.
+- If one skill might apply, call load_skill with that exact name and read its steps.
+- If those steps already cover the example, stop. Do not call create_skill.
+- If they are close but incomplete, call create_skill once with the same name. Keep the existing steps and add only what this example is missing.
+- If none apply, call create_skill once with a new name.
+
+## Skill fields
+- name: a short kebab-case name. Reuse the existing name when improving a skill.
+- description: one sentence saying when to use the skill
+- content: reusable steps. Keep placeholders such as {{Order Number}} as they are. Do not copy the customer's exact words.
+
+Call load_skill only for a name from the list. Do not answer with plain text."""
 
 @dataclass
 class SkillsCreatorAgent:
@@ -55,21 +78,15 @@ class SkillsCreatorAgent:
         )
 
     def invoke(self, query: str, reference_answer: str):
-        skill_descriptions = SkillsManager().get_skill_first_level_descriptions()
-        
+        existing_skills = SkillsManager().get_skill_first_level_descriptions()
         message = HumanMessage(f"""Existing skills:
-        {skill_descriptions}
+{existing_skills}
+                               
+Customer query:
+{query}
 
-        Customer query:
-        {query}
-
-        Supervisor reference answer:
-        {reference_answer}
-
-        Use `load_skill` only if an existing description covers the same task.
-        If refining an existing skill, merge in any steps, placeholders, or support channels from this reference that are missing.
-        Finish by calling `create_skill` exactly once.
-        Do not use other tool names.""")
+Supervisor reference answer:
+{reference_answer}""")
         
         response = self.agent.invoke(
              {
