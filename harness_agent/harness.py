@@ -75,9 +75,8 @@ class AgentHarness:
         ai_response_text = ai_response.text           
         
         if self.training_mode:            
-            if was_tool_called(response, 'request_supervisor'):     
-                self.skills_creator.invoke(input,reference_answer)  
-       
+            if was_tool_called(response, "request_supervisor"):
+                self.skills_creator.invoke(input, reference_answer)
             self.guidelines_optimizer.invoke(input, ai_response_text, reference_answer)
         else:
             self.message_history.append(ai_response)

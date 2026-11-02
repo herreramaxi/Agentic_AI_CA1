@@ -17,11 +17,14 @@ Workflow:
 4. Call `update_guidelines` once with the full replacement list.
 
 Recommendations:
-* Keep the guidelines short and general. 
-* Include lessons about the wrong kind of response or unsuitable tone when relevant. 
-* Keep task-specific procedures in skills.
+* Keep the guidelines short and general; focus on style and response type (clarify vs give instructions vs escalate).
+* Include lessons about the wrong kind of response or unsuitable tone when relevant.
+* Keep task-specific procedures in skills, not in guidelines.
+* When a skill is loaded, the agent should follow that skill's steps and placeholders.
+* Do not invent policies, steps, or contact channels when no skill applies.
+* Do NOT write guidelines that ban portal steps, support channels, or placeholders in general — those belong in skills and should be used when a skill provides them.
 
-IMPORTANT: 
+IMPORTANT:
 * Use no more than 10 lines in this format: [#]. [Instruction] - [Brief rationale]
 * Do not put the style score in the guidelines.
 """

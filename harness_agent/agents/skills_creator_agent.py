@@ -20,22 +20,26 @@ You will receive the customer query, supervisor reference answer, and the names 
 
 If an existing description covers the same task:
 1. Call `load_skill` with that exact name.
-2. Merge the reusable information from the existing skill and the new reference.
-3. Call `create_skill` with the same name to replace the skill with the improved version.
+2. Merge the reusable procedure from the existing skill and the new reference.
+3. Prefer the richer procedure: if this reference adds ordered steps, placeholders, or support channels missing from the existing skill, add them.
+4. Call `create_skill` with the same name to replace the skill with the improved version.
 
 If no existing description covers the task, call `create_skill` with a new name.
 
 Tool arguments:
 - name: concise kebab-case name for the demonstrated task; reuse the existing name when refining
 - description: one sentence defining when the service agent should load it
-- content: Markdown instructions for handling similar future queries
+- content: Markdown procedure card for handling similar future queries
 
 Content rules:
-1. Generalize from the example; do not include the customer's wording as a special case.
-2. Retain reusable variables and abstract fields from the reference instead of replacing them with invented concrete values.
-3. Include only facts, steps, and constraints supported by the reference answer.
-4. Do not invent merchants, policies, deadlines, eligibility rules, or contact details.
-5. Keep tone guidance brief because general interaction style belongs in AGENT.md.
+1. Extract the reusable procedure from the supervisor reference. If the reference has ordered steps, keep them as ordered steps in the skill.
+2. Keep placeholders exactly as in the reference (for example {{Order Number}}, {{Online Company Portal Info}}, {{Online Order Interaction}}, {{Customer Support Hours}}, {{Customer Support Phone Number}}, {{Website URL}}).
+3. Preserve the reference response type (give self-serve steps vs ask for a clarifying detail vs escalate).
+4. Generalize from the example; do not include the customer's exact wording as a special case.
+5. Include only facts, steps, channels, and constraints supported by the reference. Do not invent merchants, policies, deadlines, eligibility rules, or contact details that are not in the reference.
+6. Do NOT replace a detailed reference with only "acknowledge the request" or "do not provide unsupported steps". If the reference gives a procedure, the skill must teach that procedure.
+7. Prefer this short structure: when to use → steps → optional support/escalation taken from the reference.
+8. Keep tone guidance brief; general interaction style belongs in AGENT.md.
 """
 
 @dataclass
@@ -63,6 +67,7 @@ class SkillsCreatorAgent:
         {reference_answer}
 
         Use `load_skill` only if an existing description covers the same task.
+        If refining an existing skill, merge in any steps, placeholders, or support channels from this reference that are missing.
         Finish by calling `create_skill` exactly once.
         Do not use other tool names.""")
         

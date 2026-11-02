@@ -16,7 +16,7 @@ def create_skill(name: str, description: str, content: str) -> str:
     Args:
         name: Concise kebab-case name for the demonstrated task. Reuse the existing name when refining that skill.
         description: One sentence explaining when the service agent should load the skill.
-        content: Reusable Markdown instructions based only on the reference; retain its abstract fields and exclude unsupported facts.
+        content: Reusable Markdown procedure based only on the supervisor reference. When the reference has steps, channels, or placeholders, include them. Keep placeholders exactly (e.g. {{Order Number}}, {{Online Company Portal Info}}). Do not invent facts absent from the reference, and do not collapse a detailed procedure into only an acknowledgment.
     """
     sm = SkillsManager()
     skill_path_created = str(sm.create_skill(name, description, content))
