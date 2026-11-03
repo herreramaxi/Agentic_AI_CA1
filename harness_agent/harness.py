@@ -45,7 +45,6 @@ class AgentHarness:
             model=self.model,        
             context_schema=AgentContext,
             # state_schema=TrainingState,
-            # tools= [sm.load_skill, self.request_supervisor],
             tools= tools,
             middleware=middlewares,
             system_prompt=self.system_prompt,

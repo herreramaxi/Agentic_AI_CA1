@@ -28,6 +28,7 @@ Skills follow a progressive disclosure pattern: you see each skill's name and de
 
 - Only when the Available Skills list contains a skill
 - The user's request matches one of those descriptions
+- A skill matches only when both the situation and the kind of reply in its description fit the customer
 
 Important:
 - Call load_skill only with a name copied from the Available Skills list.

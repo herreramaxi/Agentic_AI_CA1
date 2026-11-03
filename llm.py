@@ -53,14 +53,26 @@ models: dict[str, BaseChatModel] = {
             max_retries=3,
             timeout=60,
     ),
-    # Agent: fast DeepSeek model
-    "deepseek-flash": ChatDeepSeek(
-        model="deepseek-flash",
-        temperature=0,
+    "gpt-6-astra": ChatOpenAI(
+        model="gpt-6-astra",
+        reasoning_effort="low",
         max_retries=3,
         timeout=60,
     ),
-   
+    # Agent: fast DeepSeek model
+     "deepseek-flash": ChatDeepSeek(
+            model="deepseek-flash",
+            temperature=0,
+            max_retries=3,
+            timeout=60,
+        ),
+    "deepseek-flash-low": ChatDeepSeek(
+        model="deepseek-flash",
+        reasoning_effort="low",
+        temperature=0,
+        max_retries=3,
+        timeout=60,
+    ),   
     # Fixed evaluation judge
     "deepseek-v4-pro": ChatDeepSeek(
         model="deepseek-v4-pro",

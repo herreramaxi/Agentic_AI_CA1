@@ -24,7 +24,7 @@ Compare the assistant reply with the supervisor example on:
 - tone
 - kind of reply: ask a question, answer directly, or pass it on
 
-Leave concrete steps and intent-specific procedures to the skills.
+Leave concrete steps and intent-specific procedures to the skills. A guideline must not name an intent's steps, portals, phone numbers, or placeholders.
 
 ## How to update
 - Keep a guideline that is still useful.
