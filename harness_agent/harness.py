@@ -18,7 +18,7 @@ class AgentHarness:
     training_dataset : Any |None = None
     training_mode: bool = False
     agentic_memory_disabled: bool = False
-    agent: Any | None = None 
+    customer_service_agent: Any | None = None 
     skills_creator: SkillsCreatorAgent | None = None 
     guidelines_optimizer: GuidelinesOptimizerAgent | None = None 
     system_prompt: str | None = None
@@ -41,7 +41,7 @@ class AgentHarness:
         logging.debug(f"Tools: {", ".join( [tool.name for tool in tools]) if tools else "N/A"}")
         logging.debug(f"Middlewares: {", ".join( [m.name for m in middlewares]) if middlewares else "N/A"}")
 
-        self.agent = create_agent(
+        self.customer_service_agent = create_agent(
             model=self.model,        
             context_schema=AgentContext,
             # state_schema=TrainingState,
@@ -69,7 +69,7 @@ class AgentHarness:
             self.message_history.append(humman_message)
             messages = self.message_history
                
-        response = self.agent.invoke({ 'messages': messages}, context= context)
+        response = self.customer_service_agent.invoke({ 'messages': messages}, context= context)
         ai_response = response["messages"][-1]
         ai_response_text = ai_response.text           
         

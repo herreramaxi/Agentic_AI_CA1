@@ -1,6 +1,6 @@
 ---
 name: track-restitution
-description: Use when a customer is unsure how to track a restitution and the reply should explain where to find refund status in their account.
+description: Use when a customer is unsure how to track a restitution and the reply should provide the account steps to view refund status.
 ---
 
 1. Visit our website and log in to your account.

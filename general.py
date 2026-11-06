@@ -52,4 +52,17 @@ def initialize_logging(level):
         format="%(asctime)s - %(filename)s - %(funcName)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         force=True
-    )        
+    )      
+      
+def backup_agentic_memory(dataset_version: str, model_name: str):
+    safe_model = model_name.replace("/", "-")
+    backup_path = Path("./backup") / dataset_version / safe_model
+
+    logging.warning(f"Copying agentic memory into: {backup_path}")
+    if backup_path.exists():
+        logging.warning(f"Folder already exists, cleaning folder: {backup_path}")
+        shutil.rmtree(backup_path)
+
+    backup_path.mkdir(parents=True)
+    shutil.copy("./AGENT.md", backup_path / "AGENT.md")
+    shutil.copytree("./skills", backup_path / "skills")
