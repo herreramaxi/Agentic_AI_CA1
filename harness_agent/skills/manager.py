@@ -127,7 +127,7 @@ class SkillsManager:
             return f"No skill named {skill_name}. Use a name from the Available Skills list."
         return skill_path.read_text(encoding="utf-8")
 
-    #Ref: Based on agent_skills_utils.py
+    #Ref: Based on agent_skills_utils.py from lab Harness Engineering
     def create_skill(self,
         name: str,
         description: str,
